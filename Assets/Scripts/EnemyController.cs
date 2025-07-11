@@ -1,5 +1,6 @@
 using UnityEngine;
 using System.Collections;
+using UnityEngine.SocialPlatforms.Impl;
 
 public class EnemyController : MonoBehaviour
 {
@@ -8,14 +9,22 @@ public class EnemyController : MonoBehaviour
     public float chargeSpeed = 10f;
     public bool isCharging = false;
     public GameObject bulletPrefab; 
+    public GameObject ExplosionEffect;
     public Transform firePoint;
-    public float fireRate = 1f;
+    public System.Action OnDeath;
     // Start is called once before the first execution of Update after the MonoBehaviour is created
     void Start()
     {
         StartCoroutine(EntryPhase());
     }
 
+    public void Die()
+    {
+        OnDeath?.Invoke(); // Invoke the death event if there are any subscribers
+        ScoreManager.Instance?.AddScore(100);
+        Instantiate(ExplosionEffect, transform.position, Quaternion.identity);
+        Destroy(gameObject); // Destroy the enemy object
+    }
     IEnumerator EntryPhase()
     {
         yield return new WaitForSeconds(1f); // Wait before starting the movement
@@ -41,7 +50,8 @@ public class EnemyController : MonoBehaviour
         while (elapsedTime < shootingPhaseDuration)
         {
             Instantiate(bulletPrefab, firePoint.position, firePoint.rotation);
-            elapsedTime += fireRate;
+            float fireRate = Random.Range(0.1f, 2f); // Random fire rate between 0.5 and 1.5 seconds
+            elapsedTime++;
             yield return new WaitForSeconds(fireRate);
         }
         StartCoroutine(MovePhase());
@@ -101,19 +111,21 @@ public class EnemyController : MonoBehaviour
         }
     }
 
+    void OnTriggerEnter2D(Collider2D other)
+    {
+        if (other.CompareTag("Player"))
+        {
+            PlayerManager playerManager = other.GetComponentInParent<PlayerManager>();
+            playerManager.TakeDamage(); // Call TakeDamage method from 
+            Die(); // Call Die method to handle enemy death
+        }
+    }
+
     void Update()
     {
         if (isOffScreen() && isCharging)
         {
             Destroy(gameObject); // Destroy the enemy if it goes off-screen AFTER charging
-        }
-    }
-
-    void OnTriggerEnter2D(Collider2D other)
-    {
-        if (other.CompareTag("PlayerProjectile"))
-        {
-            Destroy(gameObject); // Destroy the enemy when hit by a player's projectile
         }
     }
     

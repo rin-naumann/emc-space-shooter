@@ -1,13 +1,16 @@
 using TMPro;
 using UnityEngine;
+using UnityEngine.SocialPlatforms.Impl;
 
 public class UIController : MonoBehaviour
 {
     // Public variables
     public TextMeshProUGUI playerInfoText;
     public TextMeshProUGUI dashStatusText;
+    public TextMeshProUGUI scoreText;
     public PlayerController playerController;
-
+    public PlayerManager playerManager;
+    public ScoreManager scoreManager;
     // Start is called once before the first execution of Update after the MonoBehaviour is created
     void Start()
     {
@@ -21,17 +24,17 @@ public class UIController : MonoBehaviour
         // Check if player is reloading
         if (playerController.isReloading)
         {
-            playerInfoText.text = $"Lives: {playerController.lives}\n" +
-                              $"Ammo: Reloading... {(playerController.reloadTime -= Time.deltaTime).ToString("F2")}s\n" +
-                              $"Bombs: {playerController.ammoBombRemaining} / {playerController.ammoBomb} \n" +
-                              $"Dash: ";
+            playerInfoText.text = $"Lives: {playerManager.lives}\n" +
+                                  $"Ammo: Reloading... {(playerController.reloadTime -= Time.deltaTime).ToString("F2")}s\n" +
+                                  $"Bombs: {playerController.ammoBombRemaining} / {playerController.ammoBomb} \n" +
+                                  $"Dash: ";
         }
         else
         {
-            playerInfoText.text = $"Lives: {playerController.lives}\n" +
-                              $"Ammo: {playerController.ammoGunRemaining} / {playerController.ammoGun} \n" +
-                              $"Bombs: {playerController.ammoBombRemaining} / {playerController.ammoBomb} \n" +
-                              $"Dash: ";    
+            playerInfoText.text = $"Lives: {playerManager.lives}\n" +
+                                  $"Ammo: {playerController.ammoGunRemaining} / {playerController.ammoGun} \n" +
+                                  $"Bombs: {playerController.ammoBombRemaining} / {playerController.ammoBomb} \n" +
+                                  $"Dash: ";
         }
 
         // Update dash status text
@@ -45,5 +48,8 @@ public class UIController : MonoBehaviour
             dashStatusText.text = $"Active";
             dashStatusText.color = Color.green;
         }
+        
+        // Keep updating the score text
+        scoreText.text = $"Score: {scoreManager.score}";
     }
 }

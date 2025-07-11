@@ -8,15 +8,15 @@ public class PlayerController : MonoBehaviour
 {
     // Movement related variables
     private float moveSpeed = 5f;
-    private float dashMultiplier = 2f;
+    private float dashMultiplier = 3f;
     private float dashDuration = 0.2f;
     private float dashCooldown = 1f;
-    private bool isDashing = false;
+    public bool isDashing = false;
     private float dashTimeRemaining;
     public float dashCooldownTimer;
 
     // Shooting related variables
-    public float ammoGun = 20f;
+    public float ammoGun = 25f;
     public float ammoBomb = 5f;
     public GameObject bulletPrefab;
     public GameObject bombPrefab;
@@ -25,20 +25,34 @@ public class PlayerController : MonoBehaviour
     public float ammoBombRemaining = 5f;
     public bool isReloading = false;
     private float nextFireTime = 0.0f;
-    public float reloadTime = 2f;
-
-    // Life related variables
-    public int lives = 3;
+    public float reloadTime = 1f;
 
     // Update is called once per frame
     void Update()
     {
-        movementHandler();
-        dashHandler();
-        shootingHandler();
+        MovementHandler();
+        DashHandler();
+        ShootingHandler();
+        BombReloader();
     }
 
-    void movementHandler()
+    void LateUpdate()
+    {
+        Vector3 pos = transform.position;
+
+        // Get orthographic camera bounds using screen corners
+        Vector3 bottomLeft = Camera.main.ScreenToWorldPoint(new Vector3(0, 0, 0));
+        Vector3 topRight = Camera.main.ScreenToWorldPoint(new Vector3(Screen.width, Screen.height, 0));
+
+        float padding = 0.5f; // adjust based on your player size
+
+        pos.x = Mathf.Clamp(pos.x, bottomLeft.x + padding, topRight.x - padding);
+        pos.y = Mathf.Clamp(pos.y, bottomLeft.y + padding, topRight.y - padding);
+
+        transform.position = pos;
+    }
+
+    void MovementHandler()
     {
         float horizontalInput = Input.GetAxis("Horizontal");
         float verticalInput = Input.GetAxis("Vertical");
@@ -48,12 +62,14 @@ public class PlayerController : MonoBehaviour
         transform.Translate(movement);
     }
 
-    void dashHandler()
+    void DashHandler()
     {
         if (dashCooldownTimer > 0f) dashCooldownTimer -= Time.deltaTime;
 
         if (Input.GetKeyDown(KeyCode.LeftShift) && dashCooldownTimer <= 0f && !isDashing)
         {
+            PlayerManager pm = GetComponent<PlayerManager>();
+            pm.isInvincible = true; // Set player invincible during dash
             isDashing = true;
             dashTimeRemaining = dashDuration;
             dashCooldownTimer = dashCooldown;
@@ -65,11 +81,13 @@ public class PlayerController : MonoBehaviour
             if (dashTimeRemaining <= 0f)
             {
                 isDashing = false;
+                PlayerManager pm = GetComponent<PlayerManager>();
+                pm.isInvincible = false; // Reset invincibility after dash
             }
         }
     }
 
-    void shootingHandler()
+    void ShootingHandler()
     {
         if (Input.GetKeyDown(KeyCode.Space) && ammoGunRemaining > 0 && !isReloading && Time.time >= nextFireTime)
         {
@@ -98,17 +116,11 @@ public class PlayerController : MonoBehaviour
         isReloading = false;
     }
 
-    void OnTriggerEnter2D(Collider2D other)
+    void BombReloader()
     {
-        if (other.CompareTag("Enemy") || other.CompareTag("Obstacle"))
+        if ((ScoreManager.Instance?.score % 2500 == 0) && ScoreManager.Instance?.score != 0)
         {
-            lives--;
-            Destroy(other.gameObject); // Destroy the enemy or obstacle
-            if (lives <= 0)
-            {
-                // Handle player death logic here
-                Destroy(gameObject); // Destroy the player
-            }
+            ammoBombRemaining++;
         }
     }
 }

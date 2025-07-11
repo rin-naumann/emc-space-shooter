@@ -39,7 +39,8 @@ public class BombController : MonoBehaviour
         {
             if (enemy.CompareTag("Enemy"))
             {
-                Destroy(enemy.gameObject); // Destroy the enemy
+                EnemyController ec = enemy.GetComponent<EnemyController>();
+                if (ec != null) ec.Die();
             }
         }
         Destroy(gameObject); // Destroy the bomb after explosion
