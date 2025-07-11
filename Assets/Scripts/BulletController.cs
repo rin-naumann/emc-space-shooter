@@ -16,16 +16,6 @@ public class BulletController : MonoBehaviour
         transform.Translate(Vector3.up * speed * Time.deltaTime);
     }
 
-    void OnTriggerEnter2D(Collider2D other)
-    {
-        if (other.CompareTag("Enemy"))
-        {
-            // Handle bullet hit logic here
-            Destroy(other.gameObject); // Destroy the enemy
-            Destroy(gameObject); // Destroy the bullet
-        }
-    }
-
     void OnBecameInvisible()
     {
         Destroy(gameObject);

@@ -103,6 +103,7 @@ public class PlayerController : MonoBehaviour
         if (other.CompareTag("Enemy") || other.CompareTag("Obstacle"))
         {
             lives--;
+            Destroy(other.gameObject); // Destroy the enemy or obstacle
             if (lives <= 0)
             {
                 // Handle player death logic here

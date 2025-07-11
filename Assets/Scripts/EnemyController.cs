@@ -108,6 +108,14 @@ public class EnemyController : MonoBehaviour
             Destroy(gameObject); // Destroy the enemy if it goes off-screen AFTER charging
         }
     }
+
+    void OnTriggerEnter2D(Collider2D other)
+    {
+        if (other.CompareTag("PlayerProjectile"))
+        {
+            Destroy(gameObject); // Destroy the enemy when hit by a player's projectile
+        }
+    }
     
     bool isOffScreen()
     {
