@@ -13,20 +13,15 @@ public class BulletController : MonoBehaviour
     }
 
     void Update()
+{
+    if (CompareTag("PlayerProjectile"))
     {
-        if (CompareTag("PlayerProjectile"))
-        {
-            GetComponent<SpriteRenderer>().color = new Color(0f, 255f, 255f); // Set bullet color to light blue
-            transform.rotation = Quaternion.Euler(0, 0, 270); // Ensure the bullet is facing right
-            transform.Translate(Vector3.up * speed * Time.deltaTime);
-        }
-        else if (CompareTag("EnemyProjectile"))
-        {
-            transform.rotation = Quaternion.Euler(0, 0, 90); // Ensure the bullet is facing left
-            transform.Translate(Vector3.up * speed * Time.deltaTime);
-        }
-        
+        GetComponent<SpriteRenderer>().color = new Color(0f, 1f, 1f); // light blue
     }
+
+    // ✅ Move forward in the direction the bullet is facing
+    transform.position += transform.up * speed * Time.deltaTime;
+}
 
     void OnTriggerEnter2D(Collider2D other)
     {

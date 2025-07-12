@@ -1,3 +1,4 @@
+using Unity.VisualScripting;
 using UnityEngine;
 using UnityEngine.SocialPlatforms.Impl;
 
@@ -43,7 +44,7 @@ public class AsteroidController : MonoBehaviour
         }
     }
 
-    void OecameInvisible()
+    void OnBecameInvisible()
     {
         if (hasEnteredScreen)
         {
@@ -69,6 +70,15 @@ public class AsteroidController : MonoBehaviour
     {
         switch (other.tag)
         {
+            case "EnemyProjectile":
+                BulletController enemyBullet = other.GetComponent<BulletController>();
+                if (enemyBullet != null)
+                {
+                    TakeDamage(1);
+                    Destroy(other.gameObject);
+                }
+                break;
+                
             case "PlayerProjectile":
                 BulletController bullet = other.GetComponent<BulletController>();
                 if (bullet != null)
@@ -92,6 +102,7 @@ public class AsteroidController : MonoBehaviour
                 playerManager.TakeDamage(); // Call TakeDamage method from PlayerManager
                 Die(); // Destroy the asteroid
                 break;
+
             case "Enemy":
                 EnemyController enemyController = other.GetComponentInParent<EnemyController>();
                 enemyController.Die(); // Call Die method to handle enemy death

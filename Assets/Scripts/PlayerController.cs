@@ -1,8 +1,10 @@
 using System.Collections;
+using System.Diagnostics.CodeAnalysis;
 using Unity.VisualScripting;
 using UnityEngine;
 using UnityEngine.Rendering;
 using UnityEngine.Rendering.Universal.Internal;
+using UnityEngine.SocialPlatforms.Impl;
 
 public class PlayerController : MonoBehaviour
 {
@@ -21,13 +23,22 @@ public class PlayerController : MonoBehaviour
     public GameObject bulletPrefab;
     public GameObject bombPrefab;
     public Transform firePoint;
-    public float ammoGunRemaining;
+    public float ammoGunRemaining = 25f;
     public float ammoBombRemaining = 5f;
     public bool isReloading = false;
     private float nextFireTime = 0.0f;
     public float reloadTime = 1f;
+    private int scoreForNextBomb = 2000;
 
-    // Update is called once per frame
+    // SFX related variables
+    private AudioSource audioSource;
+    public AudioClip shootingSFX;
+
+    void Start()
+    {
+        audioSource = GetComponent<AudioSource>();
+    }
+
     void Update()
     {
         MovementHandler();
@@ -91,6 +102,7 @@ public class PlayerController : MonoBehaviour
     {
         if (Input.GetKeyDown(KeyCode.Space) && ammoGunRemaining > 0 && !isReloading && Time.time >= nextFireTime)
         {
+            audioSource.PlayOneShot(shootingSFX);
             Instantiate(bulletPrefab, firePoint.position, firePoint.rotation);
             ammoGunRemaining--;
         }
@@ -112,15 +124,17 @@ public class PlayerController : MonoBehaviour
         isReloading = true;
         yield return new WaitForSeconds(reloadTime); // Simulate reload time
         ammoGunRemaining = ammoGun; // Refill ammo
-        reloadTime = 2f; // Reset reload time
+        reloadTime = 1f; // Reset reload time
         isReloading = false;
     }
 
     void BombReloader()
     {
-        if ((ScoreManager.Instance?.score % 2500 == 0) && ScoreManager.Instance?.score != 0)
+        int score = ScoreManager.Instance.score;
+        if (score == scoreForNextBomb)
         {
             ammoBombRemaining++;
+            scoreForNextBomb += scoreForNextBomb;
         }
     }
 }

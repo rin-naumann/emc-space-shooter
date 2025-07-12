@@ -2,15 +2,27 @@ using UnityEngine;
 using System.Collections;
 public class PlayerManager : MonoBehaviour
 {
-    public int lives = 3; // Number of lives the player has
-    public GameObject playerPrefab; // Prefab for the player character
-    public GameObject deathExplosion; // Explosion effect when the player dies
-    public float invincibilityTime = 1f; // Time the player is invincible after getting hit
-    private float invincibilityTimer = 0f; // Timer to track invincibility duration
-    public bool isInvincible = false; // Flag to check if the player is invincible
-    private PlayerController playerController; // Reference to the PlayerController script
+    // Player lives related variables
+    public int lives = 3; 
+    public GameObject playerPrefab; 
+    public GameObject hitExplosion; 
+
+    // I-frame related variables
+    public float invincibilityTime = 1f; 
+    private float invincibilityTimer = 0f; 
+    public bool isInvincible = false; 
     private Coroutine flashingCoroutine;
-    // Update is called once per frame
+
+    // SFX related variables
+    private AudioSource audioSource;
+    public AudioClip hitSFX;
+    public AudioClip deathSFX;
+
+    void Start()
+    {
+        audioSource = GetComponent<AudioSource>();
+    }
+
     void Update()
     {
         if (invincibilityTimer > 0f)
@@ -22,7 +34,7 @@ public class PlayerManager : MonoBehaviour
     void OnDestroy()
     {
         
-        Instantiate(deathExplosion, playerPrefab.transform.position, Quaternion.identity); // Instantiate explosion effect
+        Instantiate(hitExplosion, playerPrefab.transform.position, Quaternion.identity); // Instantiate explosion effect
         Destroy(gameObject); // Destroy the player object
     }
 
@@ -35,13 +47,15 @@ public class PlayerManager : MonoBehaviour
             StopCoroutine(flashingCoroutine);
         }
 
-        Instantiate(deathExplosion, playerPrefab.transform.position, Quaternion.identity);
+        audioSource.PlayOneShot(hitSFX);
+        Instantiate(hitExplosion, playerPrefab.transform.position, Quaternion.identity);
         lives--;
         invincibilityTimer = invincibilityTime;
         StartCoroutine(FlashInvincibility());
 
         if (lives <= 0)
         {
+            audioSource.PlayOneShot(deathSFX);
             Destroy(gameObject);
         }
     }

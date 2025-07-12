@@ -10,8 +10,9 @@ public class EnemySpawner : MonoBehaviour
     public float spawnInterval = 2f;
     public int waveSize = 10;
     public float waveCooldown = 3f;
-    private int enemiesDefeated = 0;
     private bool waveActive = false;
+    private float waveChance;
+    private float waveRamp;
 
     void Start()
     {
@@ -29,7 +30,7 @@ public class EnemySpawner : MonoBehaviour
         {
             if (!waveActive && spawnedEnemies.Count < maxEnemies)
             {
-                float waveChance = Mathf.Clamp01(enemiesDefeated / 50f); // scales from 0 to 1
+                waveChance = Mathf.Clamp01(waveRamp / 50f); // scales from 0 to 1
 
                 if (Random.value < waveChance)
                 {
@@ -61,6 +62,7 @@ public class EnemySpawner : MonoBehaviour
         yield return new WaitUntil(() => spawnedEnemies.Count == 0);
 
         waveActive = false;
+        waveRamp = 0f;
 
         yield return new WaitForSeconds(waveCooldown);
     }
@@ -80,7 +82,7 @@ public class EnemySpawner : MonoBehaviour
             enemyController.OnDeath += () =>
             {
                 spawnedEnemies.Remove(enemy);
-                enemiesDefeated++;
+                waveRamp += 1f;
             };
         }
 

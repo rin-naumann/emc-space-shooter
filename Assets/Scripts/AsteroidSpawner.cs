@@ -6,7 +6,7 @@ public class AsteroidSpawner : MonoBehaviour
 {
     // Public variables
     public List<GameObject> asteroidPrefabs; // List of asteroid prefabs to spawn
-    public float spawnInterval = 10f; // Time interval between spawns
+    public float spawnInterval = 3f; // Time interval between spawns
     public float spawnRadius = 20f; // Radius around the player to spawn asteroids
     public float spawnDistanceFromCenter = 10f;
     void Start()
