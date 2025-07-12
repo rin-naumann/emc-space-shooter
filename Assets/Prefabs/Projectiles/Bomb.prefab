@@ -107,6 +107,7 @@ MonoBehaviour:
   explosionRadius: 10
   fuseTime: 2
   explosionEffect: {fileID: 7225952707990841895, guid: 36bf7f9698e408d4da96be836bb6cf46, type: 3}
+  explosionSFX: {fileID: 8300000, guid: 9ca12dd9c10258c43a8ed855674302ba, type: 3}
 --- !u!70 &4494882980552202299
 CapsuleCollider2D:
   m_ObjectHideFlags: 0

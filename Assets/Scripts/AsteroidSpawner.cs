@@ -1,31 +1,37 @@
-using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 
 public class AsteroidSpawner : MonoBehaviour
 {
-    // Public variables
-    public List<GameObject> asteroidPrefabs; // List of asteroid prefabs to spawn
-    public float spawnInterval = 3f; // Time interval between spawns
-    public float spawnRadius = 20f; // Radius around the player to spawn asteroids
-    public float spawnDistanceFromCenter = 10f;
+    [Header("Asteroid Settings")]
+    public List<GameObject> asteroidPrefabs; // List of asteroid types to spawn
+
+    [Header("Spawn Timing")]
+    public float spawnInterval = 3f; // Time between spawns
+
+    [Header("Spawn Position")]
+    public float spawnDistanceFromCenter = 10f; // Distance from center where asteroids appear
+
     void Start()
     {
+        // Repeatedly call SpawnAsteroid at fixed intervals
         InvokeRepeating(nameof(SpawnAsteroid), 0f, spawnInterval);
     }
 
     void SpawnAsteroid()
     {
-        Vector2 screenCenter = Vector2.zero;
-        Vector2 spawnDir = Random.insideUnitCircle.normalized; // random direction
+        if (asteroidPrefabs.Count == 0) return;
+
+        Vector2 screenCenter = Vector2.zero; // Center of screen (can update if needed)
+        Vector2 spawnDir = Random.insideUnitCircle.normalized; // Random direction from center
         Vector2 spawnPos = screenCenter + spawnDir * spawnDistanceFromCenter;
 
-        // Choose a random asteroid prefab from the list
-        GameObject asteroidPrefab = asteroidPrefabs[Random.Range(0, asteroidPrefabs.Count)];
-        GameObject asteroid = Instantiate(asteroidPrefab, spawnPos, Quaternion.identity);
+        // Pick a random asteroid from the list
+        GameObject prefab = asteroidPrefabs[Random.Range(0, asteroidPrefabs.Count)];
+        GameObject asteroid = Instantiate(prefab, spawnPos, Quaternion.identity);
 
-        // Make the asteroid move toward the screen center (or through it)
-        Vector2 targetDir = (screenCenter - spawnPos).normalized;
-        asteroid.GetComponent<AsteroidController>().Initialize(targetDir);
+        // Send asteroid toward the screen center
+        Vector2 moveDirection = (screenCenter - spawnPos).normalized;
+        asteroid.GetComponent<AsteroidController>()?.Initialize(moveDirection);
     }
 }

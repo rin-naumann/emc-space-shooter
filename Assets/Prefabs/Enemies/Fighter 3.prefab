@@ -107,7 +107,7 @@ MonoBehaviour:
   chargeSpeed: 10
   isCharging: 0
   bulletPrefab: {fileID: 940997898971439151, guid: f4ec4162609a5d74ca97f103eb36d5c1, type: 3}
-  ExplosionEffect: {fileID: 100002, guid: cafecd3fc3b761c45bb1553f35cf5c96, type: 3}
+  explosionEffect: {fileID: 1819670865682205821, guid: 9b7c95ca90dab504dbd62e89c61fd6ea, type: 3}
   firePoint: {fileID: 6752413493704736660}
   shootingSFX: {fileID: 8300000, guid: 67380d0f8413bab43ba49dd220df5a44, type: 3}
   deathSFX: {fileID: 8300000, guid: a41b4d3a55b2eb043a72eef08324607a, type: 3}

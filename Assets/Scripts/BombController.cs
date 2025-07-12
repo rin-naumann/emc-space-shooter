@@ -2,52 +2,67 @@ using UnityEngine;
 
 public class BombController : MonoBehaviour
 {
-    // Public variables
+    [Header("Bomb Settings")]
     public float speed = 5f;
     public float explosionRadius = 10f;
     public float fuseTime = 1f;
-    public GameObject explosionEffect; // Assign an explosion effect prefab in the inspector
+
+    [Header("Effects")]
+    public GameObject explosionEffect;
+    public AudioClip explosionSFX;
+
+    private bool hasExploded = false;
 
     void Start()
     {
-        transform.rotation = Quaternion.Euler(0, 0, 270); // Ensure the bullet is facing right
-        Invoke("Explode", fuseTime); // Schedule explosion after fuse time
+        transform.rotation = Quaternion.Euler(0, 0, 270); // Face forward (right in 2D)
+        Invoke(nameof(Explode), fuseTime); // Auto-explode after fuse
     }
 
     void Update()
     {
+        // Moves the bomb forward each frame
         transform.Translate(Vector3.up * speed * Time.deltaTime);
     }
 
     void OnTriggerEnter2D(Collider2D other)
     {
-        if (other.CompareTag("Enemy"))
+        if (!hasExploded && other.CompareTag("Enemy"))
         {
-            // Handle explosion logic here
-            Explode();
-            Destroy(gameObject);
+            Explode(); // Manual detonation on enemy hit
         }
     }
 
     void Explode()
     {
-        Instantiate(explosionEffect, transform.position, Quaternion.identity); // Instantiate explosion effect
+        if (hasExploded) return;
+        hasExploded = true;
 
-        // Logic for explosion effect, e.g., damage enemies within radius
-        Collider2D[] hitEnemies = Physics2D.OverlapCircleAll(transform.position, explosionRadius);
-        foreach (Collider2D enemy in hitEnemies)
+        // Spawn explosion effect
+        Instantiate(explosionEffect, transform.position, Quaternion.identity);
+
+        // Detect all colliders in radius
+        Collider2D[] hits = Physics2D.OverlapCircleAll(transform.position, explosionRadius);
+        foreach (Collider2D hit in hits)
         {
-            if (enemy.CompareTag("Enemy"))
+            if (hit.CompareTag("Enemy"))
             {
-                EnemyController ec = enemy.GetComponent<EnemyController>();
-                if (ec != null) ec.Die();
+                EnemyController ec = hit.GetComponent<EnemyController>();
+                if (ec != null)
+                {
+                    ec.Die();
+                }
             }
         }
-        Destroy(gameObject); // Destroy the bomb after explosion
+
+        // Play explosion SFX from global manager
+        GameManager.Instance.playSFX(explosionSFX);
+
+        Destroy(gameObject); // Destroy bomb object
     }
 
     void OnBecameInvisible()
     {
-        Destroy(gameObject);
+        Destroy(gameObject); // Auto-destroy if off-screen
     }
 }

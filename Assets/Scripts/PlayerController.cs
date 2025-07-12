@@ -1,36 +1,40 @@
 using System.Collections;
-using System.Diagnostics.CodeAnalysis;
-using Unity.VisualScripting;
 using UnityEngine;
-using UnityEngine.Rendering;
-using UnityEngine.Rendering.Universal.Internal;
-using UnityEngine.SocialPlatforms.Impl;
 
 public class PlayerController : MonoBehaviour
 {
-    // Movement related variables
-    private float moveSpeed = 5f;
-    private float dashMultiplier = 3f;
-    private float dashDuration = 0.2f;
-    private float dashCooldown = 1f;
+    [Header("Movement")]
+    public float moveSpeed = 5f;
+    public float dashMultiplier = 3f;
+    public float dashDuration = 0.2f;
+    public float dashCooldown = 1f;
     public bool isDashing = false;
     private float dashTimeRemaining;
     public float dashCooldownTimer;
 
-    // Shooting related variables
+    [Header("Gun Settings")]
     public float ammoGun = 25f;
-    public float ammoBomb = 5f;
-    public GameObject bulletPrefab;
-    public GameObject bombPrefab;
-    public Transform firePoint;
     public float ammoGunRemaining = 25f;
-    public float ammoBombRemaining = 5f;
-    public bool isReloading = false;
-    private float nextFireTime = 0.0f;
     public float reloadTime = 1f;
-    private int scoreForNextBomb = 2000;
+    public float reloadTimer = 0f;
+    public bool isReloading = false;
 
-    // SFX related variables
+    [Header("Bomb Settings")]
+    public float ammoBomb = 5f;
+    public float ammoBombRemaining = 5f;
+    public GameObject bombPrefab;
+    private int nextBombThreshold = 2000;
+
+    [Header("Life Reward")]
+    private int nextLifeThreshold = 5000;
+
+    [Header("Projectile")]
+    public GameObject bulletPrefab;
+    public Transform firePoint;
+    private float nextFireTime = 0f;
+    public float fireRate = 0.15f;
+
+    [Header("Audio")]
     private AudioSource audioSource;
     public AudioClip shootingSFX;
 
@@ -41,49 +45,38 @@ public class PlayerController : MonoBehaviour
 
     void Update()
     {
-        MovementHandler();
-        DashHandler();
-        ShootingHandler();
-        BombReloader();
+        HandleMovement();
+        HandleDash();
+        HandleShooting();
+        CheckRewards();
     }
 
     void LateUpdate()
     {
-        Vector3 pos = transform.position;
-
-        // Get orthographic camera bounds using screen corners
-        Vector3 bottomLeft = Camera.main.ScreenToWorldPoint(new Vector3(0, 0, 0));
-        Vector3 topRight = Camera.main.ScreenToWorldPoint(new Vector3(Screen.width, Screen.height, 0));
-
-        float padding = 0.5f; // adjust based on your player size
-
-        pos.x = Mathf.Clamp(pos.x, bottomLeft.x + padding, topRight.x - padding);
-        pos.y = Mathf.Clamp(pos.y, bottomLeft.y + padding, topRight.y - padding);
-
-        transform.position = pos;
+        ClampPositionToScreen();
     }
 
-    void MovementHandler()
+    void HandleMovement()
     {
-        float horizontalInput = Input.GetAxis("Horizontal");
-        float verticalInput = Input.GetAxis("Vertical");
+        float h = Input.GetAxis("Horizontal");
+        float v = Input.GetAxis("Vertical");
         float currentSpeed = isDashing ? moveSpeed * dashMultiplier : moveSpeed;
 
-        Vector2 movement = new Vector2(horizontalInput, verticalInput).normalized * currentSpeed * Time.deltaTime;
-        transform.Translate(movement);
+        Vector2 direction = new Vector2(h, v).normalized;
+        transform.Translate(direction * currentSpeed * Time.deltaTime);
     }
 
-    void DashHandler()
+    void HandleDash()
     {
-        if (dashCooldownTimer > 0f) dashCooldownTimer -= Time.deltaTime;
+        if (dashCooldownTimer > 0f)
+            dashCooldownTimer -= Time.deltaTime;
 
         if (Input.GetKeyDown(KeyCode.LeftShift) && dashCooldownTimer <= 0f && !isDashing)
         {
-            PlayerManager pm = GetComponent<PlayerManager>();
-            pm.isInvincible = true; // Set player invincible during dash
             isDashing = true;
             dashTimeRemaining = dashDuration;
             dashCooldownTimer = dashCooldown;
+            GetComponent<PlayerManager>().isInvincible = true;
         }
 
         if (isDashing)
@@ -92,22 +85,23 @@ public class PlayerController : MonoBehaviour
             if (dashTimeRemaining <= 0f)
             {
                 isDashing = false;
-                PlayerManager pm = GetComponent<PlayerManager>();
-                pm.isInvincible = false; // Reset invincibility after dash
+                GetComponent<PlayerManager>().isInvincible = false;
             }
         }
     }
 
-    void ShootingHandler()
+    void HandleShooting()
     {
-        if (Input.GetKeyDown(KeyCode.Space) && ammoGunRemaining > 0 && !isReloading && Time.time >= nextFireTime)
+        // Hold to shoot
+        if (Input.GetKey(KeyCode.Space) && ammoGunRemaining > 0 && !isReloading && Time.time >= nextFireTime)
         {
-            audioSource.PlayOneShot(shootingSFX);
             Instantiate(bulletPrefab, firePoint.position, firePoint.rotation);
+            audioSource.PlayOneShot(shootingSFX);
             ammoGunRemaining--;
+            nextFireTime = Time.time + fireRate;
         }
 
-        if (Input.GetKeyDown(KeyCode.R) && ammoGunRemaining < ammoGun)
+        if (Input.GetKeyDown(KeyCode.R) && ammoGunRemaining < ammoGun && !isReloading)
         {
             StartCoroutine(Reload());
         }
@@ -120,21 +114,49 @@ public class PlayerController : MonoBehaviour
     }
 
     IEnumerator Reload()
+{
+    isReloading = true;
+    reloadTimer = reloadTime;
+
+    while (reloadTimer > 0f)
     {
-        isReloading = true;
-        yield return new WaitForSeconds(reloadTime); // Simulate reload time
-        ammoGunRemaining = ammoGun; // Refill ammo
-        reloadTime = 1f; // Reset reload time
-        isReloading = false;
+        reloadTimer -= Time.deltaTime;
+        yield return null;
     }
 
-    void BombReloader()
+    ammoGunRemaining = ammoGun;
+    isReloading = false;
+}
+
+    void CheckRewards()
     {
-        int score = ScoreManager.Instance.score;
-        if (score == scoreForNextBomb)
+        int currentScore = ScoreManager.Instance.score;
+        PlayerManager pm = GetComponent<PlayerManager>();
+
+        // Bomb every 2000 points
+        while (currentScore >= nextBombThreshold)
         {
             ammoBombRemaining++;
-            scoreForNextBomb += scoreForNextBomb;
+            nextBombThreshold += 2000;
         }
+
+        // Life every 5000 points
+        while (currentScore >= nextLifeThreshold)
+        {
+            pm.lives++;
+            nextLifeThreshold += 5000;
+        }
+    }
+
+    void ClampPositionToScreen()
+    {
+        Vector3 pos = transform.position;
+        Vector3 bottomLeft = Camera.main.ScreenToWorldPoint(Vector3.zero);
+        Vector3 topRight = Camera.main.ScreenToWorldPoint(new Vector3(Screen.width, Screen.height, 0));
+        float padding = 0.5f;
+
+        pos.x = Mathf.Clamp(pos.x, bottomLeft.x + padding, topRight.x - padding);
+        pos.y = Mathf.Clamp(pos.y, bottomLeft.y + padding, topRight.y - padding);
+        transform.position = pos;
     }
 }

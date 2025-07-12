@@ -1,55 +1,65 @@
 using TMPro;
 using UnityEngine;
-using UnityEngine.SocialPlatforms.Impl;
 
 public class UIController : MonoBehaviour
 {
-    // Public variables
+    [Header("UI References")]
     public TextMeshProUGUI playerInfoText;
     public TextMeshProUGUI dashStatusText;
     public TextMeshProUGUI scoreText;
+
+    [Header("Player References")]
     public PlayerController playerController;
     public PlayerManager playerManager;
     public ScoreManager scoreManager;
-    // Start is called once before the first execution of Update after the MonoBehaviour is created
-    void Start()
-    {
-        
-    }
 
-    // Update is called once per frame
     void Update()
     {
+        UpdatePlayerInfo();
+        UpdateDashStatus();
+        UpdateScore();
+    }
 
-        // Check if player is reloading
+    void UpdatePlayerInfo()
+    {
+        // Display player lives, ammo, bombs, and reload status
+        string ammoText;
+
         if (playerController.isReloading)
         {
-            playerInfoText.text = $"Lives: {playerManager.lives}\n" +
-                                  $"Ammo: Reloading... {(playerController.reloadTime -= Time.deltaTime).ToString("F2")}s\n" +
-                                  $"Bombs: {playerController.ammoBombRemaining} / {playerController.ammoBomb} \n" +
-                                  $"Dash: ";
+            // Format reload time without modifying the variable
+            float timeRemaining = Mathf.Max(0f, playerController.reloadTime);
+            ammoText = $"Ammo: Reloading... {playerController.reloadTimer.ToString("F2")}s";
         }
         else
         {
-            playerInfoText.text = $"Lives: {playerManager.lives}\n" +
-                                  $"Ammo: {playerController.ammoGunRemaining} / {playerController.ammoGun} \n" +
-                                  $"Bombs: {playerController.ammoBombRemaining} / {playerController.ammoBomb} \n" +
-                                  $"Dash: ";
+            ammoText = $"Ammo: {playerController.ammoGunRemaining} / {playerController.ammoGun}";
         }
 
-        // Update dash status text
+        playerInfoText.text =
+            $"Lives: {playerManager.lives}\n" +
+            $"{ammoText}\n" +
+            $"Bombs: {playerController.ammoBombRemaining} / {playerController.ammoBomb}\n" +
+            $"Dash: ";
+    }
+
+    void UpdateDashStatus()
+    {
+        // Update dash availability text and color
         if (playerController.dashCooldownTimer > 0f)
         {
-            dashStatusText.text = $"Inactive";
+            dashStatusText.text = "Inactive";
             dashStatusText.color = Color.red;
         }
         else
         {
-            dashStatusText.text = $"Active";
+            dashStatusText.text = "Active";
             dashStatusText.color = Color.green;
         }
-        
-        // Keep updating the score text
+    }
+
+    void UpdateScore()
+    {
         scoreText.text = $"Score: {scoreManager.score}";
     }
 }

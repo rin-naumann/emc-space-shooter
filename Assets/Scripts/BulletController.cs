@@ -2,43 +2,48 @@ using UnityEngine;
 
 public class BulletController : MonoBehaviour
 {
-    // Public variables
+    [Header("Bullet Settings")]
     public float speed = 20f;
-    public GameObject explosionEffect; // Assign an explosion effect prefab in the inspector
+    public GameObject explosionEffect;
 
     void Start()
     {
-        
-        
+        if (CompareTag("PlayerProjectile"))
+        {
+            GetComponent<SpriteRenderer>().color = new Color(0f, 1f, 1f); // Light blue
+        }
     }
 
     void Update()
-{
-    if (CompareTag("PlayerProjectile"))
     {
-        GetComponent<SpriteRenderer>().color = new Color(0f, 1f, 1f); // light blue
+        transform.position += transform.up * speed * Time.deltaTime;
     }
-
-    // ✅ Move forward in the direction the bullet is facing
-    transform.position += transform.up * speed * Time.deltaTime;
-}
 
     void OnTriggerEnter2D(Collider2D other)
     {
-        if (other.CompareTag("Player") && CompareTag("EnemyProjectile"))
+        if (CompareTag("EnemyProjectile") && other.CompareTag("Player"))
         {
-            Instantiate(explosionEffect, transform.position, Quaternion.identity); // Instantiate explosion effect
             PlayerManager playerManager = other.GetComponentInParent<PlayerManager>();
-            playerManager.TakeDamage(); // Call TakeDamage method from PlayerManager
-            Destroy(gameObject); // Destroy the bullet
+            if (playerManager != null && !playerManager.isInvincible)
+            {
+                playerManager.TakeDamage();
+            }
 
+            Destroy(gameObject);
         }
-        else if (other.CompareTag("Enemy") && CompareTag("PlayerProjectile"))
+        else if (CompareTag("PlayerProjectile") && other.CompareTag("Enemy"))
         {
-            EnemyController enemyController = other.GetComponentInParent<EnemyController>();
-            enemyController.Die(); // Call Die method to handle enemy death
-            Destroy(other.gameObject); // Destroy the enemy
-            Destroy(gameObject); // Destroy the bullet
+            // Let the EnemyController handle its own explosion
+            EnemyController enemyController = other.GetComponent<EnemyController>();
+            if (enemyController == null)
+                enemyController = other.GetComponentInParent<EnemyController>();
+
+            if (enemyController != null)
+            {
+                enemyController.Die(); // This handles its own explosion
+            }
+
+            Destroy(gameObject);
         }
     }
 

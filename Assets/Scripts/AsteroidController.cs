@@ -1,24 +1,22 @@
-using Unity.VisualScripting;
 using UnityEngine;
-using UnityEngine.SocialPlatforms.Impl;
 
 public class AsteroidController : MonoBehaviour
 {
+    [Header("Movement Settings")]
     public float speed = 2f;
     public float rotationSpeed = 20f;
+
+    [Header("Health Settings")]
     public int health = 3;
-    public GameObject explosionEffect;
     private bool hasEnteredScreen;
     private Vector3 moveDirection;
 
-    public void Initialize(Vector2 direction)
-    {
-        moveDirection = direction.normalized;
-    }
+    [Header("Effects")]
+    public GameObject explosionEffect;
 
     void Start()
     {
-        // Choose a random movement direction (normalized)
+        // Pick a random direction to drift in
         float angle = Random.Range(0f, 360f);
         float rad = angle * Mathf.Deg2Rad;
         moveDirection = new Vector3(Mathf.Cos(rad), Mathf.Sin(rad), 0f).normalized;
@@ -26,13 +24,21 @@ public class AsteroidController : MonoBehaviour
 
     void Update()
     {
-        transform.position += (Vector3)(moveDirection * speed * Time.deltaTime);
+        // Move and rotate the asteroid
+        transform.position += moveDirection * speed * Time.deltaTime;
         transform.Rotate(0f, 0f, rotationSpeed * Time.deltaTime);
 
+        // Track if the asteroid has ever entered the screen
         if (IsVisibleFrom(Camera.main))
         {
             hasEnteredScreen = true;
         }
+    }
+
+    public void Initialize(Vector2 direction)
+    {
+        // Optional initializer if spawning manually
+        moveDirection = direction.normalized;
     }
 
     public void TakeDamage(int damage)
@@ -44,47 +50,35 @@ public class AsteroidController : MonoBehaviour
         }
     }
 
+    void Die()
+    {
+        // Create explosion and grant points
+        Instantiate(explosionEffect, transform.position, Quaternion.identity);
+        ScoreManager.Instance?.AddScore(250);
+        Destroy(gameObject);
+    }
+
     void OnBecameInvisible()
     {
+        // Destroy only if it was visible before
         if (hasEnteredScreen)
         {
             Destroy(gameObject);
         }
     }
 
-    void Die()
-    {
-        
-        Instantiate(explosionEffect, transform.position, Quaternion.identity);
-        ScoreManager.Instance?.AddScore(100); // Add score for destroying the asteroid
-        Destroy(gameObject);
-    }
-
-    bool IsVisibleFrom(Camera cam)
-    {
-        Plane[] planes = GeometryUtility.CalculateFrustumPlanes(cam);
-        return GeometryUtility.TestPlanesAABB(planes, GetComponent<Collider2D>().bounds);
-    }
-
     void OnTriggerEnter2D(Collider2D other)
     {
+        // Handle collisions with bullets, bombs, and players
         switch (other.tag)
         {
-            case "EnemyProjectile":
-                BulletController enemyBullet = other.GetComponent<BulletController>();
-                if (enemyBullet != null)
-                {
-                    TakeDamage(1);
-                    Destroy(other.gameObject);
-                }
-                break;
-                
             case "PlayerProjectile":
+            case "EnemyProjectile":
                 BulletController bullet = other.GetComponent<BulletController>();
                 if (bullet != null)
                 {
                     TakeDamage(1);
-                    Destroy(other.gameObject); // Destroy the bullet
+                    Destroy(other.gameObject);
                 }
                 break;
 
@@ -93,20 +87,27 @@ public class AsteroidController : MonoBehaviour
                 if (bomb != null)
                 {
                     TakeDamage(3);
-                    Destroy(other.gameObject); // Destroy the bomb
+                    Destroy(other.gameObject);
                 }
                 break;
 
             case "Player":
                 PlayerManager playerManager = other.GetComponentInParent<PlayerManager>();
-                playerManager.TakeDamage(); // Call TakeDamage method from PlayerManager
-                Die(); // Destroy the asteroid
+                playerManager?.TakeDamage();
+                Die();
                 break;
 
             case "Enemy":
-                EnemyController enemyController = other.GetComponentInParent<EnemyController>();
-                enemyController.Die(); // Call Die method to handle enemy death
+                EnemyController enemy = other.GetComponentInParent<EnemyController>();
+                enemy?.Die();
                 break;
         }
+    }
+
+    // Check if asteroid is within the camera view
+    bool IsVisibleFrom(Camera cam)
+    {
+        Plane[] planes = GeometryUtility.CalculateFrustumPlanes(cam);
+        return GeometryUtility.TestPlanesAABB(planes, GetComponent<Collider2D>().bounds);
     }
 }
